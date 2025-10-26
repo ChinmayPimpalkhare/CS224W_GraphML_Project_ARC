@@ -1,0 +1,17 @@
+name: graphflix
+channels:
+  - pytorch
+  - conda-forge
+dependencies:
+  - python=3.10
+  - pip
+  - numpy
+  - pandas
+  - scikit-learn
+  - pyyaml
+  - requests
+  - matplotlib
+  - tqdm
+  - pre-commit
+  - pip:
+      - python-dotenv>=1.0
