@@ -1,0 +1,8 @@
+model: lightgcn
+training:
+  epochs: 50
+  batch_size: 2048
+  lr: 1e-3
+  neg_per_pos: 1
+eval:
+  k: [10, 20]

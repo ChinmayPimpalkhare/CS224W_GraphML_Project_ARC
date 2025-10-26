@@ -1,0 +1,19 @@
+# data & artifacts
+data/
+output/
+runs/
+*.zip
+*.log
+*.ckpt
+*.pt
+
+# env & cache
+.env
+.venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+Thumbs.db

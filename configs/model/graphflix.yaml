@@ -1,0 +1,18 @@
+model: graphflix
+params:
+  dim: 64
+  heads: 4
+  beta_init: 1.0
+  use_struct_bias: true
+  use_type_bias: true
+  use_meta_bias: true
+profile:
+  half_life_days: 150     # τ
+  rating_weight: true     # max(0, r - r_bar_u)
+training:
+  epochs: 50
+  batch_size: 1024
+  lr: 2e-4
+  neg_per_pos: 1
+eval:
+  k: [10, 20]

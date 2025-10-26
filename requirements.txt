@@ -1,0 +1,2 @@
+# Minimal pip layer when using Conda for core libs & torch
+python-dotenv>=1.0
