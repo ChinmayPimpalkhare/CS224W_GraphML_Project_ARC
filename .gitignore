@@ -13,7 +13,11 @@ runs/
 __pycache__/
 *.pyc
 .ipynb_checkpoints/
+venv/
+venvs/
+ENV/
 
 # OS
 .DS_Store
 Thumbs.db
+cross-check.py

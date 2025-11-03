@@ -1,13 +1,12 @@
-import pandas as pd
-import requests
-import os
-from pathlib import Path
-import zipfile
 import io
 import re
+import zipfile
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from pathlib import Path
 from threading import Lock
-import json
+
+import pandas as pd
+import requests
 
 # TMDb API Configuration
 TMDB_API_KEY = "8d3bf80ee6e83ac5626133e1a95b22ea"
@@ -44,7 +43,7 @@ def load_and_save_movielens_data(ml_dir, output_dir="output"):
         sep="::",
         engine="python",
         names=["movie_id", "title", "genres"],
-        encoding="latin-1"
+        encoding="latin-1",
     )
 
     # Load ratings
@@ -52,7 +51,7 @@ def load_and_save_movielens_data(ml_dir, output_dir="output"):
         f"{ml_dir}/ratings.dat",
         sep="::",
         engine="python",
-        names=["user_id", "movie_id", "rating", "timestamp"]
+        names=["user_id", "movie_id", "rating", "timestamp"],
     )
 
     # Load users
@@ -60,7 +59,7 @@ def load_and_save_movielens_data(ml_dir, output_dir="output"):
         f"{ml_dir}/users.dat",
         sep="::",
         engine="python",
-        names=["user_id", "gender", "age", "occupation", "zip_code"]
+        names=["user_id", "gender", "age", "occupation", "zip_code"],
     )
 
     # Save to CSV
@@ -69,19 +68,19 @@ def load_and_save_movielens_data(ml_dir, output_dir="output"):
     ratings.to_csv(f"{output_dir}/ratings.csv", index=False)
     users.to_csv(f"{output_dir}/users.csv", index=False)
 
-    print(f"✓ Saved {len(movies)} movies to movies.csv")
-    print(f"✓ Saved {len(ratings)} ratings to ratings.csv")
-    print(f"✓ Saved {len(users)} users to users.csv")
+    print(f"Saved {len(movies)} movies to movies.csv")
+    print(f"Saved {len(ratings)} ratings to ratings.csv")
+    print(f"Saved {len(users)} users to users.csv")
 
     return movies, ratings, users
 
 
 def extract_year_from_title(title):
     """Extract year from movie title (format: 'Movie Name (YYYY)')"""
-    match = re.search(r'\((\d{4})\)$', title)
+    match = re.search(r"\((\d{4})\)$", title)
     if match:
         year = match.group(1)
-        clean_title = title[:match.start()].strip()
+        clean_title = title[: match.start()].strip()
         return clean_title, year
     return title, None
 
@@ -90,11 +89,7 @@ def search_tmdb_by_title(title, year, api_key):
     """Search TMDb by movie title and year"""
     try:
         url = f"{TMDB_BASE_URL}/search/movie"
-        params = {
-            "api_key": api_key,
-            "query": title,
-            "year": year
-        }
+        params = {"api_key": api_key, "query": title, "year": year}
         response = requests.get(url, params=params, timeout=10)
 
         if response.status_code == 200:
@@ -111,10 +106,7 @@ def get_tmdb_movie_details(tmdb_id, api_key):
     """Fetch movie details from TMDb including cast and crew"""
     try:
         url = f"{TMDB_BASE_URL}/movie/{tmdb_id}"
-        params = {
-            "api_key": api_key,
-            "append_to_response": "credits,external_ids"
-        }
+        params = {"api_key": api_key, "append_to_response": "credits,external_ids"}
         response = requests.get(url, params=params, timeout=10)
 
         if response.status_code == 200:
@@ -127,8 +119,8 @@ def get_tmdb_movie_details(tmdb_id, api_key):
 
 def process_single_movie(row, api_key):
     """Process a single movie and return enriched data"""
-    movie_id = row['movie_id']
-    title = row['title']
+    movie_id = row["movie_id"]
+    title = row["title"]
 
     clean_title, year = extract_year_from_title(title)
 
@@ -136,13 +128,13 @@ def process_single_movie(row, api_key):
     tmdb_id = search_tmdb_by_title(clean_title, year, api_key)
 
     result = {
-        'movie_id': movie_id,
-        'title': title,
-        'tmdb_id': tmdb_id,
-        'imdb_id': None,
-        'directors': [],
-        'actors': [],
-        'genres': []
+        "movie_id": movie_id,
+        "title": title,
+        "tmdb_id": tmdb_id,
+        "imdb_id": None,
+        "directors": [],
+        "actors": [],
+        "genres": [],
     }
 
     if not tmdb_id:
@@ -155,29 +147,23 @@ def process_single_movie(row, api_key):
         return result
 
     # Extract IMDb ID
-    result['imdb_id'] = details.get('external_ids', {}).get('imdb_id')
+    result["imdb_id"] = details.get("external_ids", {}).get("imdb_id")
 
     # Extract directors
-    crew = details.get('credits', {}).get('crew', [])
-    directors = [c for c in crew if c['job'] == 'Director']
-    result['directors'] = [
-        {'tmdb_id': d['id'], 'name': d['name']}
-        for d in directors
-    ]
+    crew = details.get("credits", {}).get("crew", [])
+    directors = [c for c in crew if c["job"] == "Director"]
+    result["directors"] = [{"tmdb_id": d["id"], "name": d["name"]} for d in directors]
 
     # Extract top 5 actors
-    cast = details.get('credits', {}).get('cast', [])[:5]
-    result['actors'] = [
-        {'tmdb_id': a['id'], 'name': a['name'], 'character': a.get('character', '')}
+    cast = details.get("credits", {}).get("cast", [])[:5]
+    result["actors"] = [
+        {"tmdb_id": a["id"], "name": a["name"], "character": a.get("character", "")}
         for a in cast
     ]
 
     # Extract genres
-    genres = details.get('genres', [])
-    result['genres'] = [
-        {'tmdb_id': g['id'], 'name': g['name']}
-        for g in genres
-    ]
+    genres = details.get("genres", [])
+    result["genres"] = [{"tmdb_id": g["id"], "name": g["name"]} for g in genres]
 
     return result
 
@@ -186,11 +172,12 @@ def append_to_csv(filepath, data, write_header=False):
     """Thread-safe append to CSV file"""
     with file_lock:
         df = pd.DataFrame([data])
-        df.to_csv(filepath, mode='a', header=write_header, index=False)
+        df.to_csv(filepath, mode="a", header=write_header, index=False)
 
 
-def augment_with_tmdb_parallel(movies, api_key, output_dir="output",
-                               max_workers=10, chunk_size=50):
+def augment_with_tmdb_parallel(
+    movies, api_key, output_dir="output", max_workers=10, chunk_size=50
+):
     """
     Augment MovieLens movies with TMDb data using parallel processing.
     Saves progress incrementally to avoid data loss.
@@ -206,27 +193,25 @@ def augment_with_tmdb_parallel(movies, api_key, output_dir="output",
     movie_genre_file = f"{output_dir}/movie_genre_edges.csv"
 
     # Initialize files with headers
-    pd.DataFrame(columns=['movie_id', 'title', 'tmdb_id', 'imdb_id']).to_csv(
+    pd.DataFrame(columns=["movie_id", "title", "tmdb_id", "imdb_id"]).to_csv(
         movies_enriched_file, index=False
     )
-    pd.DataFrame(columns=['director_id', 'tmdb_id', 'name']).to_csv(
+    pd.DataFrame(columns=["director_id", "tmdb_id", "name"]).to_csv(
         directors_file, index=False
     )
-    pd.DataFrame(columns=['actor_id', 'tmdb_id', 'name']).to_csv(
+    pd.DataFrame(columns=["actor_id", "tmdb_id", "name"]).to_csv(
         actors_file, index=False
     )
-    pd.DataFrame(columns=['genre_id', 'tmdb_id', 'name']).to_csv(
+    pd.DataFrame(columns=["genre_id", "tmdb_id", "name"]).to_csv(
         genres_file, index=False
     )
-    pd.DataFrame(columns=['movie_id', 'director_id']).to_csv(
+    pd.DataFrame(columns=["movie_id", "director_id"]).to_csv(
         movie_director_file, index=False
     )
-    pd.DataFrame(columns=['movie_id', 'actor_id', 'character']).to_csv(
+    pd.DataFrame(columns=["movie_id", "actor_id", "character"]).to_csv(
         movie_actor_file, index=False
     )
-    pd.DataFrame(columns=['movie_id', 'genre_id']).to_csv(
-        movie_genre_file, index=False
-    )
+    pd.DataFrame(columns=["movie_id", "genre_id"]).to_csv(movie_genre_file, index=False)
 
     # Track unique entities
     director_map = {}  # tmdb_id -> internal_id
@@ -260,74 +245,74 @@ def augment_with_tmdb_parallel(movies, api_key, output_dir="output",
 
                 # Save movie enriched data
                 movie_data = {
-                    'movie_id': result['movie_id'],
-                    'title': result['title'],
-                    'tmdb_id': result['tmdb_id'],
-                    'imdb_id': result['imdb_id']
+                    "movie_id": result["movie_id"],
+                    "title": result["title"],
+                    "tmdb_id": result["tmdb_id"],
+                    "imdb_id": result["imdb_id"],
                 }
                 append_to_csv(movies_enriched_file, movie_data)
 
                 # Process directors
-                for director in result['directors']:
-                    director_tmdb_id = director['tmdb_id']
+                for director in result["directors"]:
+                    director_tmdb_id = director["tmdb_id"]
 
                     if director_tmdb_id not in director_map:
                         director_map[director_tmdb_id] = director_counter
                         director_data = {
-                            'director_id': director_counter,
-                            'tmdb_id': director_tmdb_id,
-                            'name': director['name']
+                            "director_id": director_counter,
+                            "tmdb_id": director_tmdb_id,
+                            "name": director["name"],
                         }
                         append_to_csv(directors_file, director_data)
                         director_counter += 1
 
                     # Add edge
                     edge_data = {
-                        'movie_id': result['movie_id'],
-                        'director_id': director_map[director_tmdb_id]
+                        "movie_id": result["movie_id"],
+                        "director_id": director_map[director_tmdb_id],
                     }
                     append_to_csv(movie_director_file, edge_data)
 
                 # Process actors
-                for actor in result['actors']:
-                    actor_tmdb_id = actor['tmdb_id']
+                for actor in result["actors"]:
+                    actor_tmdb_id = actor["tmdb_id"]
 
                     if actor_tmdb_id not in actor_map:
                         actor_map[actor_tmdb_id] = actor_counter
                         actor_data = {
-                            'actor_id': actor_counter,
-                            'tmdb_id': actor_tmdb_id,
-                            'name': actor['name']
+                            "actor_id": actor_counter,
+                            "tmdb_id": actor_tmdb_id,
+                            "name": actor["name"],
                         }
                         append_to_csv(actors_file, actor_data)
                         actor_counter += 1
 
                     # Add edge
                     edge_data = {
-                        'movie_id': result['movie_id'],
-                        'actor_id': actor_map[actor_tmdb_id],
-                        'character': actor.get('character', '')
+                        "movie_id": result["movie_id"],
+                        "actor_id": actor_map[actor_tmdb_id],
+                        "character": actor.get("character", ""),
                     }
                     append_to_csv(movie_actor_file, edge_data)
 
                 # Process genres
-                for genre in result['genres']:
-                    genre_tmdb_id = genre['tmdb_id']
+                for genre in result["genres"]:
+                    genre_tmdb_id = genre["tmdb_id"]
 
                     if genre_tmdb_id not in genre_map:
                         genre_map[genre_tmdb_id] = genre_counter
                         genre_data = {
-                            'genre_id': genre_counter,
-                            'tmdb_id': genre_tmdb_id,
-                            'name': genre['name']
+                            "genre_id": genre_counter,
+                            "tmdb_id": genre_tmdb_id,
+                            "name": genre["name"],
                         }
                         append_to_csv(genres_file, genre_data)
                         genre_counter += 1
 
                     # Add edge
                     edge_data = {
-                        'movie_id': result['movie_id'],
-                        'genre_id': genre_map[genre_tmdb_id]
+                        "movie_id": result["movie_id"],
+                        "genre_id": genre_map[genre_tmdb_id],
                     }
                     append_to_csv(movie_genre_file, edge_data)
 
@@ -336,16 +321,18 @@ def augment_with_tmdb_parallel(movies, api_key, output_dir="output",
                 # Progress update
                 if processed_count % chunk_size == 0:
                     progress = (processed_count / total_movies) * 100
-                    print(f"Progress: {processed_count}/{total_movies} ({progress:.1f}%) | "
-                          f"Directors: {len(director_map)} | "
-                          f"Actors: {len(actor_map)} | "
-                          f"Genres: {len(genre_map)}")
+                    print(
+                        f"Progress: {processed_count}/{total_movies} ({progress:.1f}%) | "
+                        f"Directors: {len(director_map)} | "
+                        f"Actors: {len(actor_map)} | "
+                        f"Genres: {len(genre_map)}"
+                    )
 
             except Exception as e:
                 print(f"Error processing movie: {e}")
 
     print(f"\n{'=' * 60}")
-    print(f"✓ Processing complete!")
+    print("Processing complete!")
     print(f"{'=' * 60}\n")
 
     # Print final statistics
@@ -374,10 +361,10 @@ def main():
         TMDB_API_KEY,
         output_dir=output_dir,
         max_workers=10,  # Adjust based on your needs
-        chunk_size=50  # Progress update frequency
+        chunk_size=50,  # Progress update frequency
     )
 
-    print("\n✓ All processing complete!")
+    print("\nAll processing complete!")
     print(f"\nOutput files in '{output_dir}/':")
     print("  - movies.csv (original MovieLens)")
     print("  - ratings.csv")

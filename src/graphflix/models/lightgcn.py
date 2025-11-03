@@ -1,7 +1,10 @@
-import torch, torch.nn as nn
+import torch.nn as nn
+
 
 class LightGCN(nn.Module):
-    def __init__(self, num_users:int, num_items:int, dim:int=64, n_layers:int=3):
+    def __init__(
+        self, num_users: int, num_items: int, dim: int = 64, n_layers: int = 3
+    ):
         super().__init__()
         self.user_emb = nn.Embedding(num_users, dim)
         self.item_emb = nn.Embedding(num_items, dim)

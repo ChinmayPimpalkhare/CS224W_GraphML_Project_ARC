@@ -1,4 +1,6 @@
-import torch, torch.nn as nn
+import torch
+import torch.nn as nn
+
 
 class GraphFlix(nn.Module):
     """Skeleton for GraphFlix with user-conditioned metadata bias.
@@ -6,6 +8,7 @@ class GraphFlix(nn.Module):
     b_meta(u,i) = beta * tanh( LN(p(u))^T W LN(phi(i)) )
     where p(u) is a recency + rating-weighted profile.
     """
+
     def __init__(self, dim=64, heads=4, beta_init=1.0):
         super().__init__()
         self.dim = dim
@@ -19,5 +22,9 @@ class GraphFlix(nn.Module):
 
     def score(self, u_vec, i_vec, p_u=None, phi_i=None, b_other=0.0):
         base = (u_vec * i_vec).sum(-1)
-        b_meta = self.meta_bias(p_u, phi_i) if (p_u is not None and phi_i is not None) else 0.0
+        b_meta = (
+            self.meta_bias(p_u, phi_i)
+            if (p_u is not None and phi_i is not None)
+            else 0.0
+        )
         return base + b_other + b_meta
