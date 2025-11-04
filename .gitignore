@@ -21,3 +21,6 @@ ENV/
 .DS_Store
 Thumbs.db
 cross-check.py
+
+# grid search artifacts
+results/

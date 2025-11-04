@@ -6,6 +6,7 @@ from pathlib import Path
 import pandas as pd
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from torch_geometric.nn import LGConv
 
 
@@ -34,17 +35,10 @@ class LightGCN(nn.Module):
         return out / (self.L + 1)
 
 
-def bpr_loss(u_e, i_e, j_e, reg=1e-4):
-    pos = (u_e * i_e).sum(-1)
-    neg = (u_e * j_e).sum(-1)
-    # per-sample BPR + per-sample L2, averaged over batch
-    bpr = -torch.log(torch.sigmoid(pos - neg) + 1e-8).mean()
-    l2 = (u_e.pow(2).sum(dim=1) + i_e.pow(2).sum(dim=1) + j_e.pow(2).sum(dim=1)).mean()
-    return bpr + reg * l2
-
-
 @torch.no_grad()
-def eval_split(emb_all, U, M, split_csv, train_pos, split_name="val", K=(10, 20)):
+def eval_split(
+    emb_all, U, M, split_csv, train_pos, split_name="val", K=(10, 20), use_cosine=False
+):
     s = pd.read_csv(split_csv)
     truth = {}
     for _, r in s.iterrows():
@@ -55,6 +49,12 @@ def eval_split(emb_all, U, M, split_csv, train_pos, split_name="val", K=(10, 20)
 
     user_emb = emb_all[:U]
     item_emb = emb_all[U : U + M]
+
+    # Optional: cosine similarity
+    if use_cosine:
+        user_emb = F.normalize(user_emb, dim=1)
+        item_emb = F.normalize(item_emb, dim=1)
+
     scores = user_emb @ item_emb.T
 
     # mask train items
@@ -87,16 +87,20 @@ def eval_split(emb_all, U, M, split_csv, train_pos, split_name="val", K=(10, 20)
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--root", default="data/processed/ml1m")
-    ap.add_argument("--epochs", type=int, default=10)
+    ap.add_argument("--epochs", type=int, default=50)
     ap.add_argument("--dim", type=int, default=64)
     ap.add_argument("--layers", type=int, default=3)
-    ap.add_argument("--lr", type=float, default=1e-3)
-    ap.add_argument("--batch", type=int, default=8192)
+    ap.add_argument("--lr", type=float, default=3e-3)
+    ap.add_argument("--batch", type=int, default=4096)
+    ap.add_argument("--neg", type=int, default=5)  # ← MOVED HERE
+    ap.add_argument("--reg", type=float, default=1e-4)
+    ap.add_argument("--use_cosine", action="store_true")
     ap.add_argument("--device", default="cuda")
+    ap.add_argument("--seed", type=int, default=42)
     args = ap.parse_args()
 
     P = Path(args.root)
-    data = torch.load(P / "graph_pyg.pt")  # built earlier with train-only user→movie
+    data = torch.load(P / "graph_pyg.pt")
     U = data["user"].num_nodes
     M = data["movie"].num_nodes
 
@@ -115,71 +119,111 @@ def main():
     model = LightGCN(U + M, emb_dim=args.dim, num_layers=args.layers).to(args.device)
     opt = torch.optim.Adam(model.parameters(), lr=args.lr)
 
-    g = torch.Generator(device=args.device)
+    torch.manual_seed(args.seed)
+    g = torch.Generator(device=args.device).manual_seed(args.seed)
 
     def sample_batch(B):
-        #  Sample B train edges uniformly → gives (u, i_pos)
         idx = torch.randint(0, E, (B,), generator=g, device=args.device)
         u = um[0, idx]
         i_pos = um[1, idx]
-
-        #  Sample B negatives; resample if collides with any of user's positives
-        j_neg = torch.randint(0, M, (B,), generator=g, device=args.device)
-        # Resample only where needed
-        bad = torch.tensor(
-            [(int(j_neg[k].item()) in pos[int(u[k].item())]) for k in range(B)],
-            device=args.device,
-            dtype=torch.bool,
-        )
-        while bad.any():
-            kidx = bad.nonzero(as_tuple=True)[0]
-            j_neg[kidx] = torch.randint(
-                0, M, (kidx.numel(),), generator=g, device=args.device
-            )
-            bad = torch.tensor(
-                [(int(j_neg[k].item()) in pos[int(u[k].item())]) for k in range(B)],
-                device=args.device,
-                dtype=torch.bool,
-            )
+        # K negatives per positive (collision rate ~3-5% on ML-1M, acceptable)
+        j_neg = torch.randint(0, M, (B, args.neg), generator=g, device=args.device)
         return u, i_pos, j_neg
 
-    steps = max(1, um.size(1) // args.batch)
+    steps = max(1, E // args.batch)
+    spl = P / "splits" / "ratings_split_reindexed.csv"
+
+    best_val_ndcg = 0.0
+    best_epoch = 0
+
     for ep in range(1, args.epochs + 1):
         model.train()
-        total = 0.0
+        total_loss = 0.0
+
         for _ in range(steps):
             users, i_pos, j_neg = sample_batch(args.batch)
             emb_all = model(edge_index)  # [U+M, d]
-            u_e = emb_all[users]  # [B, d] (users)
-            i_e = emb_all[U + i_pos]  # items are offset by U
-            j_e = emb_all[U + j_neg]
-            loss = bpr_loss(u_e, i_e, j_e, reg=1e-4)
+
+            u_e = emb_all[users]  # [B, d]
+            i_e = emb_all[U + i_pos]  # [B, d]
+            j_e = emb_all[U + j_neg]  # [B, neg, d]
+
+            pos_scores = (u_e * i_e).sum(-1, keepdim=True)  # [B, 1]
+            neg_scores = (u_e.unsqueeze(1) * j_e).sum(-1)  # [B, neg]
+            bpr = -torch.log(torch.sigmoid(pos_scores - neg_scores) + 1e-8).mean()
+
+            # per-sample L2 across all negatives:
+            l2 = (
+                u_e.pow(2).sum(1).mean()
+                + i_e.pow(2).sum(1).mean()
+                + j_e.pow(2).sum(-1).mean()  # sum over d, mean over B×neg
+            )
+            loss = bpr + args.reg * l2
+
+            # ← CRITICAL: Actually train!
             opt.zero_grad()
             loss.backward()
             opt.step()
-            total += loss.item()
-        print(f"epoch {ep:03d} | bpr {total/steps:.4f}")
 
-    spl = P / "splits" / "ratings_split_reindexed.csv"
+            total_loss += loss.item()
 
+        avg_loss = total_loss / steps
+        print(f"epoch {ep:03d} | loss {avg_loss:.4f}", end="")
+
+        # Periodic validation
+        if ep % 5 == 0 or ep == 1:
+            model.eval()
+            emb_all = model(edge_index).detach().cpu()
+            val_metrics = eval_split(
+                emb_all, U, M, spl, pos, "val", K=(10,), use_cosine=args.use_cosine
+            )
+            val_ndcg = val_metrics["ndcg@10"]
+            print(f" | val_ndcg@10={val_ndcg:.4f}")
+
+            if val_ndcg > best_val_ndcg:
+                best_val_ndcg = val_ndcg
+                best_epoch = ep
+                # Save best checkpoint
+                torch.save(
+                    {"emb": emb_all, "epoch": ep, "val_ndcg": val_ndcg},
+                    P / "lightgcn_best.pt",
+                )
+        else:
+            print()
+
+    print(f"\nBest val NDCG@10: {best_val_ndcg:.4f} at epoch {best_epoch}")
+
+    # Final eval on test
     model.eval()
-    emb_all = model(edge_index).detach().cpu()  # final propagated embeddings
+    emb_all = model(edge_index).detach().cpu()
 
-    val_metrics = eval_split(emb_all, U, M, spl, pos, split_name="val", K=(10, 20))
-    test_metrics = eval_split(emb_all, U, M, spl, pos, split_name="test", K=(10, 20))
+    val_metrics = eval_split(
+        emb_all, U, M, spl, pos, "val", K=(10, 20), use_cosine=args.use_cosine
+    )
+    test_metrics = eval_split(
+        emb_all, U, M, spl, pos, "test", K=(10, 20), use_cosine=args.use_cosine
+    )
+
     print("VAL :", val_metrics)
     print("TEST:", test_metrics)
 
-    # Save artifacts (git-ignored)
+    # Save artifacts
     (P / "runs").mkdir(parents=True, exist_ok=True)
     torch.save({"emb": emb_all, "U": U, "M": M}, P / "lightgcn_emb.pt")
 
     with open(P / "runs" / "lightgcn_metrics.json", "w") as f:
-        json.dump({"val": val_metrics, "test": test_metrics}, f, indent=2)
-    print("Saved:", P / "runs" / "lightgcn_metrics.json")
+        json.dump(
+            {
+                "val": val_metrics,
+                "test": test_metrics,
+                "best_epoch": best_epoch,
+                "best_val_ndcg": best_val_ndcg,
+            },
+            f,
+            indent=2,
+        )
 
-    # Save embeddings (for eval script)
-    # torch.save({"emb": model.emb.weight.detach().cpu(), "U": U, "M": M}, P/"lightgcn_emb.pt")
+    print("Saved:", P / "runs" / "lightgcn_metrics.json")
     print("Saved:", P / "lightgcn_emb.pt")
 
 
