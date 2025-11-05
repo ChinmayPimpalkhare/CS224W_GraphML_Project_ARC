@@ -100,7 +100,7 @@ def main():
     args = ap.parse_args()
 
     P = Path(args.root)
-    data = torch.load(P / "graph_pyg.pt")
+    data = torch.load(P / "graph_pyg.pt", weights_only=False)
     U = data["user"].num_nodes
     M = data["movie"].num_nodes
 
@@ -193,9 +193,19 @@ def main():
 
     print(f"\nBest val NDCG@10: {best_val_ndcg:.4f} at epoch {best_epoch}")
 
-    # Final eval on test
+    # Final eval on test - use best checkpoint
     model.eval()
-    emb_all = model(edge_index).detach().cpu()
+    best_path = P / "lightgcn_best.pt"
+    if best_path.exists():
+        ck = torch.load(best_path, map_location="cpu", weights_only=False)
+        emb_all = ck["emb"]
+        print(
+            f"Loaded best checkpoint: epoch {ck.get('epoch', -1)}, "
+            f"val_ndcg@10={ck.get('val_ndcg', 0.0):.4f}"
+        )
+    else:
+        print("Warning: Best checkpoint not found, using final epoch embeddings")
+        emb_all = model(edge_index).detach().cpu()
 
     val_metrics = eval_split(
         emb_all, U, M, spl, pos, "val", K=(10, 20), use_cosine=args.use_cosine
