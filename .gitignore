@@ -27,3 +27,6 @@ results/
 
 # focused/grid search artifacts
 results/
+
+# experiment outputs
+results/
