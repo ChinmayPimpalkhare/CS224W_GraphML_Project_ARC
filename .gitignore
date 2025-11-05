@@ -24,3 +24,6 @@ cross-check.py
 
 # grid search artifacts
 results/
+
+# focused/grid search artifacts
+results/
