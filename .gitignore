@@ -30,3 +30,7 @@ results/
 
 # experiment outputs
 results/
+
+# processed bundles (local only)
+*.md5
+ml1m_processed_*.zip
