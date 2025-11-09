@@ -8,6 +8,7 @@ We use a heterogeneous graph, temporal leave‑one‑out splits, BPR training, a
 - **Modeling**:  <Name B> — `src/graphflix/models`, `src/graphflix/training`
 - **Eval/Blog**: <Name C> — `src/graphflix/evaluation`, `docs/`, Medium
 
+> **New to the repo? Start here:** [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md)
 ---
 
 ## 1) Setup (Conda + pip)
