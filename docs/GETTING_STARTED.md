@@ -229,7 +229,7 @@ python scripts/build_graph_pyg.py --root data/processed/ml1m --use_train_only
 python scripts/inspect_graph_pyg.py
 ```
 
-> **TMDb enrichment** (actors/directors/genres) requires a `.env` with `TMDB_API_KEY` and adds significant runtime + rate‑limit handling. Most teammates should **skip** this and use the shared processed bundle instead.
+> **TMDb enrichment** (actors/directors/genres) requires a `.env` with `TMDB_API_KEY` and adds significant runtime + rate‑limit handling. You should **skip** this and use the shared processed bundle (ml1m_processed_20251109.zip) instead.
 
 ---
 
