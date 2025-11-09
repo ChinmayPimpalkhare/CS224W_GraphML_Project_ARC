@@ -1,8 +1,3 @@
-Below is a drop‑in **`docs/GETTING_STARTED.md`** you can add to the repo.
-It assumes teammates will use the **processed dataset zip** you placed on OneDrive (fast path), and also documents how to build everything from scratch if they need to.
-
----
-
 # Getting Started (GraphFlix)
 
 This guide gets you from zero → runnable baselines (**Most‑Popular** and **LightGCN**) as quickly and reproducibly as possible.
