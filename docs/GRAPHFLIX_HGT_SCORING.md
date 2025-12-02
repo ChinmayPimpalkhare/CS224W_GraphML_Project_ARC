@@ -20,7 +20,7 @@ These two scripts live under `scripts/`:
 
 * `scripts/precompute_profilesHGT.py` 
 
-  * Builds **movie metadata embeddings** (\phi(j)) using random‑but‑fixed director/actor/genre embeddings.
+  * Builds **movie metadata embeddings** $(\phi(j))$ using random‑but‑fixed director/actor/genre embeddings.
   * Builds **half‑life user profiles** $(p_{\text{train}}(u),\ p_{\text{val}}(u),\ p_{\text{test}}(u))$
  using the temporal LOO split.
 
