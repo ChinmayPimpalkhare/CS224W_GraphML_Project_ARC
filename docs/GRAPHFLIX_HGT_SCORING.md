@@ -62,7 +62,7 @@ Follow `docs/GETTING_STARTED.md` first so you have:
      movie_genre_edges.csv
    ```
 
-3. Temporal leave‑one‑out split & reindexed IDs:
+3. Temporal leave‑one‑out split and reindexed IDs:
 
    ```bash
    python scripts/split_temporal.py \
@@ -89,7 +89,7 @@ Follow `docs/GETTING_STARTED.md` first so you have:
 
 ---
 
-## 2. Step 1 – Precompute metadata & half‑life profiles
+## 2. Step 1 – Precompute metadata and half‑life profiles
 
 This step builds:
 
@@ -129,7 +129,7 @@ You can re‑run this with different `--tau`; each run writes a new file with th
 
 ---
 
-## 3. Step 2 – Train & evaluate GraphFlixHGT
+## 3. Step 2 – Train and evaluate GraphFlixHGT
 
 Once profiles are precomputed, you can train the HGT scoring model.
 
