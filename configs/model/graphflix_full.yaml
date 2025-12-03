@@ -1,0 +1,59 @@
+model: graphflix_full
+
+# Model architecture parameters
+params:
+  dim: 64
+  heads: 4
+  num_layers: 3
+  num_node_types: 5  # user, movie, actor, director, genre
+  beta_init: 1.0
+  max_path_distance: 5
+  dropout: 0.1
+  mlp_ratio: 4
+  user_row_only: true  # User-row-only attention injection (vs broadcast)
+  
+# User profile settings
+profile:
+  half_life_days: 150     # τ for temporal decay
+  rating_weight: true     # Use rating-based weighting
+  d_phi: 192             # Metadata embedding dimension (3 * 64)
+  
+# Metadata embedding settings
+metadata:
+  actor_embed_dim: 64
+  director_embed_dim: 64
+  genre_embed_dim: 64
+  aggregation: mean      # How to pool metadata embeddings
+  
+# Graphormer settings
+graphormer:
+  use_struct_bias: true   # Use structural encodings (shortest paths)
+  use_type_bias: true     # Use type encodings (node types)
+  use_meta_bias: true     # Use metadata bias injection
+  
+# Training settings
+training:
+  epochs: 50
+  batch_size: 16         # Sweet spot for Tesla V100 16GB (4x faster than batch_size=4)
+  lr: 2e-4
+  lr_min: 1e-6
+  scheduler: cosine      # cosine, plateau, or none
+  neg_per_pos: 1
+  k_hops: 1              # Keep at 1 for speed
+  weight_decay: 1e-5
+  grad_clip: 1.0
+  
+# Evaluation settings
+eval:
+  k_list: [10, 20]      # K values for Recall@K and NDCG@K
+  eval_every: 5          # Evaluate every N epochs
+  compute_metrics: true  # Compute ranking metrics (slower but more informative)
+  
+# Data settings
+data:
+  precomputed_path: data/processed/ml1m
+  use_reindexed: true
+  
+# General settings
+seed: 42
+device: auto  # auto, cpu, cuda, mps
