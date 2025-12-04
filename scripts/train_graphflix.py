@@ -12,6 +12,7 @@ Implements the full training loop with:
 
 import argparse
 import json
+import logging
 import sys
 import time
 from datetime import datetime
@@ -25,6 +26,7 @@ import torch
 import torch.optim as optim
 import yaml
 from torch.optim.lr_scheduler import CosineAnnealingLR, ReduceLROnPlateau
+from torch.utils.tensorboard import SummaryWriter
 
 from src.graphflix.data.graphflix_dataloader import load_graph_and_create_dataloader
 from src.graphflix.evaluation.metrics import evaluate_model
@@ -49,12 +51,28 @@ class Trainer:
         )
 
         # Create save directory with timestamp
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        self.save_dir = Path(save_dir) / f"graphflix_{timestamp}"
+        # If save_dir already contains a timestamp pattern (from shell script), use it directly
+        save_dir_path = Path(save_dir)
+        if save_dir_path.name.startswith("graphflix_") and any(c.isdigit() for c in save_dir_path.name):
+            # Already has timestamp from shell script, use it directly
+            self.save_dir = save_dir_path
+        else:
+            # No timestamp, add one
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            self.save_dir = save_dir_path / f"graphflix_{timestamp}"
         self.save_dir.mkdir(parents=True, exist_ok=True)
 
-        print(f"Device: {self.device}")
-        print(f"Save directory: {self.save_dir}")
+        # Setup file logging FIRST before any output
+        self.log_file = self.save_dir / "training.log"
+        self._setup_logging()
+
+        self.log(f"Device: {self.device}")
+        self.log(f"Save directory: {self.save_dir}")
+        self.log(f"Training logs: {self.log_file}")
+
+        # Initialize TensorBoard writer
+        self.writer = SummaryWriter(log_dir=str(self.save_dir / "tensorboard"))
+        self.log(f"TensorBoard logs: {self.save_dir / 'tensorboard'}")
 
         # Save config
         with open(self.save_dir / "config.yaml", "w") as f:
@@ -77,6 +95,46 @@ class Trainer:
         # Logging
         self.train_history = []
         self.val_history = []
+
+    def _setup_logging(self):
+        """Setup file and console logging."""
+        # Create logger
+        self.logger = logging.getLogger('GraphFlixTrainer')
+        self.logger.setLevel(logging.INFO)
+        
+        # Remove existing handlers to avoid duplicates
+        self.logger.handlers.clear()
+        
+        # File handler - logs everything to file
+        file_handler = logging.FileHandler(self.log_file, mode='w')
+        file_handler.setLevel(logging.INFO)
+        file_formatter = logging.Formatter(
+            '%(asctime)s - %(levelname)s - %(message)s',
+            datefmt='%Y-%m-%d %H:%M:%S'
+        )
+        file_handler.setFormatter(file_formatter)
+        self.logger.addHandler(file_handler)
+        
+        # Console handler - also print to console
+        console_handler = logging.StreamHandler(sys.stdout)
+        console_handler.setLevel(logging.INFO)
+        console_formatter = logging.Formatter('%(message)s')
+        console_handler.setFormatter(console_formatter)
+        self.logger.addHandler(console_handler)
+        
+        # Prevent propagation to root logger
+        self.logger.propagate = False
+
+    def log(self, message, level='info'):
+        """Log a message to both file and console."""
+        if level == 'info':
+            self.logger.info(message)
+        elif level == 'warning':
+            self.logger.warning(message)
+        elif level == 'error':
+            self.logger.error(message)
+        elif level == 'debug':
+            self.logger.debug(message)
 
     def _build_model(self):
         """Build GraphFlix model."""
