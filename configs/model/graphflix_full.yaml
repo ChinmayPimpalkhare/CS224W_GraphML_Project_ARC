@@ -33,7 +33,7 @@ graphormer:
   
 # Training settings
 training:
-  epochs: 50
+  epochs: 20
   batch_size: 16         # Sweet spot for Tesla V100 16GB (4x faster than batch_size=4)
   lr: 2e-4
   lr_min: 1e-6
