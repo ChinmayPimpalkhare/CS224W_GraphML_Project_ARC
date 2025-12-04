@@ -336,9 +336,16 @@ class Trainer:
         # Save training history
         self.save_history()
 
-        print("=" * 80)
-        print("Training Complete!")
-        print("=" * 80)
+        # Close TensorBoard writer
+        self.writer.close()
+
+        self.log("=" * 80)
+        self.log("Training Complete!")
+        self.log("=" * 80)
+        self.log(f"\nTraining log saved to: {self.log_file}")
+        self.log(f"To view training metrics in TensorBoard, run:")
+        self.log(f"  tensorboard --logdir={self.save_dir / 'tensorboard'}")
+        self.log(f"  Then open http://localhost:6006 in your browser\n")
 
     def save_checkpoint(self, filename):
         """Save model checkpoint."""
@@ -436,18 +443,21 @@ def main():
     print(f"  Train batches: {len(train_loader)}")
     print(f"  Val batches: {len(val_loader)}")
 
-    # Create trainer
+    # Create trainer (this will setup logging)
     trainer = Trainer(config, save_dir=args.save_dir)
 
     # Resume from checkpoint if specified
     if args.resume:
-        print(f"\nResuming from checkpoint: {args.resume}")
+        trainer.log(f"\nResuming from checkpoint: {args.resume}")
         trainer.load_checkpoint(args.resume)
 
     # Train
     trainer.train(train_loader, val_loader)
 
-    print(f"\nResults saved to: {trainer.save_dir}")
+    trainer.log(f"\nResults saved to: {trainer.save_dir}")
+    print(f"\n✅ Training complete! Logs saved to: {trainer.log_file}")
+    print(f"To monitor training progress, run in another terminal:")
+    print(f"  tail -f {trainer.log_file}")
 
 
 if __name__ == "__main__":
