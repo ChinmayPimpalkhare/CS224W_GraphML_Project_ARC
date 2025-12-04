@@ -7,7 +7,7 @@ params:
   use_type_bias: true
   use_meta_bias: true
 profile:
-  half_life_days: 150     # τ
+  half_life_days: 20      # τ (changed from 150 for faster decay)
   rating_weight: true     # max(0, r - r_bar_u)
 training:
   epochs: 50

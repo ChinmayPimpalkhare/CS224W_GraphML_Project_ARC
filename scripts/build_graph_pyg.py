@@ -40,14 +40,18 @@ def main():
 
     # --- User->Movie edges (train-only by default to avoid leakage in message passing)
     if args.use_train_only and (P / "splits/ratings_split_reindexed.csv").exists():
-        s = pd.read_csv(
-            P / "splits/ratings_split_reindexed.csv",
-            usecols=["user_idx", "movie_idx", "split"],
-        )
+        s = pd.read_csv(P / "splits/ratings_split_reindexed.csv")
+        # Handle both column name variations
+        if "user_idx" not in s.columns and "user_id" in s.columns:
+            s = s.rename(columns={"user_id": "user_idx", "movie_id": "movie_idx"})
         train_pairs = s[s["split"] == "train"][["user_idx", "movie_idx"]]
         um = train_pairs
     else:
-        um = pd.read_csv(P / "ratings_reindexed.csv", usecols=["user_idx", "movie_idx"])
+        um = pd.read_csv(P / "ratings_reindexed.csv")
+        # Handle both column name variations
+        if "user_idx" not in um.columns and "user_id" in um.columns:
+            um = um.rename(columns={"user_id": "user_idx", "movie_id": "movie_idx"})
+        um = um[["user_idx", "movie_idx"]]
 
     ei_um = make_edge_index(um, "user_idx", "movie_idx")
     data["user", "rates", "movie"].edge_index = ei_um
@@ -55,15 +59,20 @@ def main():
     data["movie", "rev_rates", "user"].edge_index = ei_um.flip(0)
 
     # --- Movie->Actor / Director / Genre (from reindexed edges)
-    ma = pd.read_csv(
-        P / "movie_actor_edges_reindexed.csv", usecols=["movie_idx", "actor_idx"]
-    )
-    md = pd.read_csv(
-        P / "movie_director_edges_reindexed.csv", usecols=["movie_idx", "director_idx"]
-    )
-    mg = pd.read_csv(
-        P / "movie_genre_edges_reindexed.csv", usecols=["movie_idx", "genre_idx"]
-    )
+    ma = pd.read_csv(P / "movie_actor_edges_reindexed.csv")
+    if "movie_idx" not in ma.columns and "movie_id" in ma.columns:
+        ma = ma.rename(columns={"movie_id": "movie_idx", "actor_id": "actor_idx"})
+    ma = ma[["movie_idx", "actor_idx"]]
+
+    md = pd.read_csv(P / "movie_director_edges_reindexed.csv")
+    if "movie_idx" not in md.columns and "movie_id" in md.columns:
+        md = md.rename(columns={"movie_id": "movie_idx", "director_id": "director_idx"})
+    md = md[["movie_idx", "director_idx"]]
+
+    mg = pd.read_csv(P / "movie_genre_edges_reindexed.csv")
+    if "movie_idx" not in mg.columns and "movie_id" in mg.columns:
+        mg = mg.rename(columns={"movie_id": "movie_idx", "genre_id": "genre_idx"})
+    mg = mg[["movie_idx", "genre_idx"]]
 
     data["movie", "stars", "actor"].edge_index = make_edge_index(
         ma, "movie_idx", "actor_idx"
