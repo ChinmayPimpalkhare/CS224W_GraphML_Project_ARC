@@ -98,6 +98,8 @@ class Trainer:
 
     def _setup_logging(self):
         """Setup file and console logging."""
+        import logging
+        
         # Create logger
         self.logger = logging.getLogger('GraphFlixTrainer')
         self.logger.setLevel(logging.INFO)
@@ -162,10 +164,10 @@ class Trainer:
         num_params = sum(p.numel() for p in model.parameters())
         num_trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
 
-        print(f"\nModel: GraphFlix")
-        print(f"  Total parameters: {num_params:,}")
-        print(f"  Trainable parameters: {num_trainable:,}")
-        print(f"  Beta init: {model.beta.item():.4f}")
+        self.log("\nModel: GraphFlix")
+        self.log(f"  Total parameters: {num_params:,}")
+        self.log(f"  Trainable parameters: {num_trainable:,}")
+        self.log(f"  Beta init: {model.beta.item():.4f}")
 
         return model
 
@@ -181,9 +183,9 @@ class Trainer:
             self.model.parameters(), lr=lr, weight_decay=weight_decay
         )
 
-        print(f"\nOptimizer: AdamW")
-        print(f"  Learning rate: {lr}")
-        print(f"  Weight decay: {weight_decay}")
+        self.log("\nOptimizer: AdamW")
+        self.log(f"  Learning rate: {lr}")
+        self.log(f"  Weight decay: {weight_decay}")
 
         return optimizer
 
@@ -198,16 +200,16 @@ class Trainer:
             scheduler = CosineAnnealingLR(
                 self.optimizer, T_max=training_config["epochs"], eta_min=lr_min
             )
-            print(f"Scheduler: CosineAnnealingLR")
-            print(f"  Min LR: {lr_min}")
+            self.log("Scheduler: CosineAnnealingLR")
+            self.log(f"  Min LR: {lr_min}")
         elif scheduler_type == "plateau":
             scheduler = ReduceLROnPlateau(
                 self.optimizer, mode="max", factor=0.5, patience=5, verbose=True
             )
-            print(f"Scheduler: ReduceLROnPlateau")
+            self.log("Scheduler: ReduceLROnPlateau")
         else:
             scheduler = None
-            print(f"Scheduler: None")
+            self.log("Scheduler: None")
 
         return scheduler
 
@@ -254,20 +256,29 @@ class Trainer:
             num_batches += 1
             self.global_step += 1
 
-            # Print progress
+            # Log to TensorBoard (batch level) - happens EVERY batch
+            self.writer.add_scalar('Loss/train_batch', loss.item(), self.global_step)
+            self.writer.add_scalar('Beta/train_batch', aux['beta'], self.global_step)
+
+            # Print progress and flush TensorBoard every 100 batches
             if (batch_idx + 1) % 100 == 0:
                 avg_loss = epoch_loss / num_batches
                 elapsed = time.time() - epoch_start
-                print(
+                self.log(
                     f"  Batch {batch_idx + 1}/{len(dataloader)} | "
                     f"Loss: {loss.item():.4f} | "
                     f"Avg Loss: {avg_loss:.4f} | "
                     f"Beta: {aux['beta']:.4f} | "
                     f"Time: {elapsed:.1f}s"
                 )
+                # Flush TensorBoard to ensure data is written to disk
+                self.writer.flush()
 
         avg_loss = epoch_loss / num_batches
         epoch_time = time.time() - epoch_start
+
+        # Flush TensorBoard at end of epoch to ensure all data is written
+        self.writer.flush()
 
         return {
             "loss": avg_loss,
@@ -310,7 +321,7 @@ class Trainer:
         if eval_dataloader is not None and self.config["eval"].get(
             "compute_metrics", True
         ):
-            print("  Computing ranking metrics...")
+            self.log("  Computing ranking metrics...")
             ranking_metrics = evaluate_model(
                 model=self.model,
                 dataloader=eval_dataloader,
@@ -326,25 +337,30 @@ class Trainer:
         num_epochs = self.config["training"]["epochs"]
         eval_every = self.config["eval"].get("eval_every", 5)
 
-        print("\n" + "=" * 80)
-        print("Starting Training")
-        print("=" * 80)
-        print(f"Epochs: {num_epochs}")
-        print(f"Batch size: {self.config['training']['batch_size']}")
-        print(f"Eval every: {eval_every} epochs")
-        print("=" * 80 + "\n")
+        self.log("\n" + "=" * 80)
+        self.log("Starting Training")
+        self.log("=" * 80)
+        self.log(f"Epochs: {num_epochs}")
+        self.log(f"Batch size: {self.config['training']['batch_size']}")
+        self.log(f"Eval every: {eval_every} epochs")
+        self.log("=" * 80 + "\n")
 
         for epoch in range(1, num_epochs + 1):
             self.epoch = epoch
 
-            print(f"Epoch {epoch}/{num_epochs}")
-            print("-" * 80)
+            self.log(f"Epoch {epoch}/{num_epochs}")
+            self.log("-" * 80)
 
             # Train
             train_metrics = self.train_epoch(train_loader)
             self.train_history.append(train_metrics)
 
-            print(
+            # Log epoch-level training metrics to TensorBoard
+            self.writer.add_scalar('Loss/train_epoch', train_metrics['loss'], epoch)
+            self.writer.add_scalar('Beta/train_epoch', train_metrics['beta'], epoch)
+            self.writer.add_scalar('Time/train_epoch', train_metrics['epoch_time'], epoch)
+
+            self.log(
                 f"  Train Loss: {train_metrics['loss']:.4f} | "
                 f"Beta: {train_metrics['beta']:.4f} | "
                 f"Time: {train_metrics['epoch_time']:.1f}s"
@@ -353,13 +369,22 @@ class Trainer:
             # Validate
             val_metrics = None
             if val_loader is not None and epoch % eval_every == 0:
-                print("  Validating...")
+                self.log("  Validating...")
                 val_metrics = self.validate(val_loader, val_eval_loader)
                 self.val_history.append({"epoch": epoch, **val_metrics})
 
-                print(f"  Val Loss: {val_metrics['loss']:.4f}")
+                # Log validation metrics to TensorBoard
+                self.writer.add_scalar('Loss/val_epoch', val_metrics['loss'], epoch)
                 if "recall@10" in val_metrics:
-                    print(
+                    self.writer.add_scalar('Metrics/recall@10', val_metrics['recall@10'], epoch)
+                    self.writer.add_scalar('Metrics/ndcg@10', val_metrics['ndcg@10'], epoch)
+                if "recall@20" in val_metrics:
+                    self.writer.add_scalar('Metrics/recall@20', val_metrics['recall@20'], epoch)
+                    self.writer.add_scalar('Metrics/ndcg@20', val_metrics['ndcg@20'], epoch)
+
+                self.log(f"  Val Loss: {val_metrics['loss']:.4f}")
+                if "recall@10" in val_metrics:
+                    self.log(
                         f"  Recall@10: {val_metrics['recall@10']:.4f} | "
                         f"NDCG@10: {val_metrics['ndcg@10']:.4f}"
                     )
@@ -369,7 +394,7 @@ class Trainer:
                 if primary_metric > self.best_metric:
                     self.best_metric = primary_metric
                     self.save_checkpoint("best.pt")
-                    print(f"  ✓ New best model saved!")
+                    self.log("  ✓ New best model saved!")
 
             # Update scheduler
             if self.scheduler is not None:
@@ -382,11 +407,18 @@ class Trainer:
                 else:
                     self.scheduler.step()
 
+            # Log learning rate to TensorBoard
+            current_lr = self.optimizer.param_groups[0]['lr']
+            self.writer.add_scalar('LearningRate/lr', current_lr, epoch)
+            
+            # Flush TensorBoard after all epoch metrics are logged
+            self.writer.flush()
+
             # Save checkpoint every N epochs
             if epoch % 10 == 0:
                 self.save_checkpoint(f"epoch_{epoch}.pt")
 
-            print()
+            self.log("")
 
         # Save final model
         self.save_checkpoint("final.pt")
@@ -436,7 +468,7 @@ class Trainer:
         self.global_step = checkpoint["global_step"]
         self.best_metric = checkpoint["best_metric"]
 
-        print(f"Loaded checkpoint from epoch {self.epoch}")
+        self.log(f"Loaded checkpoint from epoch {self.epoch}")
 
     def save_history(self):
         """Save training history to JSON."""
@@ -450,7 +482,7 @@ class Trainer:
         with open(history_path, "w") as f:
             json.dump(history, f, indent=2)
 
-        print(f"Training history saved to: {history_path}")
+        self.log(f"Training history saved to: {history_path}")
 
 
 def main():
