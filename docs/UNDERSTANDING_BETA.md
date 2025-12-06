@@ -251,7 +251,7 @@ tensorboard --logdir=runs/
 4. **Monitor beta over epochs** - should stabilize, not oscillate wildly
 5. **Beta helps interpretability** - you can understand what the model relies on
 
-Your current training shows **Beta: 0.9849-0.9971**, indicating:
-✅ Model successfully uses both collaborative filtering and content-based filtering
-✅ Metadata (genres, actors, directors) adds value beyond just graph connections
-✅ Well-balanced recommendation approach
+For Example if the training shows **Beta: 0.9849-0.9971**, It indicates:
+- Model successfully uses both collaborative filtering and content-based filtering
+- Metadata (genres, actors, directors) adds value beyond just graph connections
+- Well-balanced recommendation approach
