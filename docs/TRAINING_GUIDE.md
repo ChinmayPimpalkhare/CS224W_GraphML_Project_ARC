@@ -1,4 +1,4 @@
-# Training on Subsampled Datasets (10% & 25%)
+# Training on Subsampled Datasets (10% and 25%)
 
 This guide explains how to train the GraphFlix model on the 10% and 25% subsamples of the MovieLens 1M dataset. These scripts are the best starting point for running training, as they are faster than training on the full dataset and provide a good baseline for model performance.
 
@@ -24,7 +24,7 @@ Both scripts follow the same automated, multi-step process:
 
 1.  **Verify Data**: They first check if the required subsampled dataset and its corresponding train/val/test splits exist in `data/processed/ml1m_10pct/` or `data/processed/ml1m_25pct/`. If not, they will attempt to create them.
 
-2.  **Build Graph & Features**: They verify that the graph file (`graph_pyg.pt`), metadata embeddings (`phi_matrix.pt`), and user profiles (`user_profiles.pt`) have been precomputed. If not, they will run the necessary scripts to generate them.
+2.  **Build Graph and Features**: They verify that the graph file (`graph_pyg.pt`), metadata embeddings (`phi_matrix.pt`), and user profiles (`user_profiles.pt`) have been precomputed. If not, they will run the necessary scripts to generate them.
 
 3.  **Verify Data Leakage Prevention**: A crucial step that runs a test (`test_data_leakage.py`) to ensure that the negative sampling process during training does not accidentally include positive items from the validation or test sets. This guarantees a fair evaluation.
 
@@ -68,7 +68,7 @@ The final step of the script is a fair and rigorous evaluation:
 
 ## What a Successful Execution Looks Like
 
-1.  **Initial Checks Pass**: You will see green "✅" checkmarks as the script verifies that the data and graph files exist.
+1.  **Initial Checks Pass**: You will see checkmarks as the script verifies that the data and graph files exist.
 2.  **Training Starts**: You will see the model architecture, optimizer, and scheduler details printed, followed by the training progress for each epoch.
     ```
     ================================================================================
@@ -103,7 +103,7 @@ The final step of the script is a fair and rigorous evaluation:
 5.  **Final Summary**: The script concludes with a summary of the results and where to find them.
     ```
     ╔══════════════════════════════════════════════════════════════════════╗
-    ║                          ✅ ALL DONE!                                 ║
+    ║                           ALL DONE!                                  ║
     ╚══════════════════════════════════════════════════════════════════════╝
 
     Results:
