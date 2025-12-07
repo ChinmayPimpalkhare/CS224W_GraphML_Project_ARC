@@ -9,7 +9,7 @@ import pandas as pd
 import requests
 
 # TMDb API Configuration
-TMDB_API_KEY = "8d3bf80ee6e83ac5626133e1a95b22ea"
+TMDB_API_KEY = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 TMDB_BASE_URL = "https://api.themoviedb.org/3"
 
 # File lock for thread-safe CSV writing
