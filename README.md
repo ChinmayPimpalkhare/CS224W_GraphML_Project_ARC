@@ -1,175 +1,60 @@
-# GraphFlix (CS224W Project)
+# GraphFlix
 
-Config‑driven scaffold for a graph‑transformer recommender on MovieLens‑1M (GraphFlix).
-We use a heterogeneous graph, temporal leave‑one‑out splits, BPR training, and top‑K metrics.
-
-## Team & Ownership
-- **Data/Infra**: <Name A> — `scripts/`, `src/graphflix/data`, `configs/data`
-- **Modeling**:  <Name B> — `src/graphflix/models`, `src/graphflix/training`
-- **Eval/Blog**: <Name C> — `src/graphflix/evaluation`, `docs/`, Medium
-
-> **New to the repo? Start here:** [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md)
----
-
-## 1) Setup (Conda + pip)
-
-> Recommended: Create a Conda env, install **PyTorch via Conda** (CPU or GPU), then install the remaining Python packages with **pip**.
-
-### A) Create & activate the Conda env
-
-**macOS / Linux**
-```bash
-conda env create -f environment.yml    # creates env "graphflix"
-conda activate graphflix
-# If environment.yml isn't present:
-# conda create -n graphflix python=3.10 -y
-# conda activate graphflix
-```
-
-**Windows (PowerShell)**
-```powershell
-conda env create -f environment.yml
-conda activate graphflix
-# If activation is blocked:
-# Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned
-```
-
-### B) Install PyTorch
-
-**CPU only (simple)**
-```bash
-conda install pytorch torchvision torchaudio cpuonly -c pytorch
-```
-
-**GPU (CUDA)** — choose the CUDA version that matches your driver (example: CUDA 12.1)
-```bash
-conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia
-```
-
-### C) Install project Python packages (pip)
-```bash
-python -m pip install --upgrade pip
-pip install -r requirements.txt
-pip install -r requirements-dev.txt   # optional: dev tools (lint/test/hooks)
-pre-commit install                    # optional: auto-format on commit
-```
-
-> We intentionally **do not** install `torch` via pip to avoid CUDA wheel mismatches with Conda.
+GraphFlix is a CS224W course project that turns MovieLens‑1M into a heterogeneous user–movie–actor–director–genre graph and trains graph-based recommenders for top‑K movie recommendation. The final model is a Graphormer‑style graph transformer with user‑conditioned metadata bias built from half‑life–decayed user profiles, alongside a strong LightGCN baseline and an HGT-based scoring variant.
 
 ---
 
-## 2) Secrets
+## 1. Getting started & LightGCN baseline
 
-Create a local `.env` (do **not** commit it):
-```bash
-cp .env.example .env      # Windows: copy .env.example .env
-# then edit .env and set:
-# TMDB_API_KEY=YOUR_TMDB_KEY
-```
+If you're just trying to get the code running, start here—**all environment, data prep, and baseline instructions live in `GETTING_STARTED.md`.**
 
-We auto‑load `.env` in scripts via `python-dotenv`. To verify:
-```bash
-python scripts/check_env.py
-```
+The same doc covers three things you’ll probably want to do first:
 
----
+- **Environment setup (Python, PyTorch, PyG, etc.)**  
+  See: [`GETTING_STARTED.md`](GETTING_STARTED.md)
 
-## 3) Data placement (enriched CSVs)
+- **Download & preprocess MovieLens‑1M, build the heterogeneous graph**  
+  See: [`GETTING_STARTED.md`](GETTING_STARTED.md)
 
-Place your 10 CSVs here (they are **git‑ignored**):
-```
-data/processed/ml1m/
-  actors.csv
-  directors.csv
-  genres.csv
-  movies.csv
-  movies_enriched.csv
-  movie_actor_edges.csv
-  movie_director_edges.csv
-  movie_genre_edges.csv
-  ratings.csv
-  users.csv
-```
-See `data/README.md` for schemas and join keys.
+- **Run the LightGCN baseline**  
+  See: [`GETTING_STARTED.md`](GETTING_STARTED.md)
 
 ---
 
-## 4) Configuration
+## 2. GraphFlixHGT: Heterogeneous Graph Transformer with scoring‑layer metadata bias
 
-Open `configs/data/movielens_1m.yaml` and confirm:
-```yaml
-data:
-  name: "movielens-1m"
-  processed_dir: "data/processed/ml1m"
-  min_user_interactions: 3
+To train and evaluate the `GraphFlixHGT` variant (HGT encoder + metadata bias added at the **scoring layer**):
 
-split:
-  strategy: "temporal_leave_one_out"  # per user: val=second-last, test=last
-  val_holdout: 1
-  test_holdout: 1
-  filter_unknown_users: true
-  seed: 42
-```
+- **[`GRAPHFLIX_HGT_SCORING.md`](GRAPHFLIX_HGT_SCORING.md)** explains:
+  - prerequisites (processed MovieLens‑1M data and `graph_pyg.pt`)
+  - how to precompute half‑life user profiles and movie metadata
+  - the training / evaluation commands for `run_graphflixHGT.py`
+  - where checkpoints and metrics are written
+
+Use this if you want a metadata‑aware graph baseline that stays very close to LightGCN’s evaluation protocol.
 
 ---
 
-## 5) Run the first steps
+## 3. Full GraphFlix model (Graphormer + attention‑level metadata bias)
 
-**Make the temporal split (per-user LOO)**
-```bash
-python scripts/split_temporal.py --ratings data/processed/ml1m/ratings.csv --out data/processed/ml1m/splits
-```
+The final GraphFlix model moves the metadata bias **inside** the Graphormer attention logits and learns a global scale parameter **β** that balances graph‑structure signals with content‑based metadata:
 
-**Validate the split**
-```bash
-python scripts/validate_split.py
-```
+-  **[`UNDERSTANDING_BETA.md`](UNDERSTANDING_BETA.md)** currently documents:
+  - how β scales the metadata bias relative to the graph encoder scores
+  - how half‑life user profiles and movie metadata embeddings are constructed and used
+  - interpretability tips (e.g., reading off what β is doing during training)
+  - with the full training / evaluation commands for the end‑to‑end GraphFlix model
 
-**(Stub) Run a baseline**
-```bash
-python scripts/run_baselines.py --config configs/model/lightgcn.yaml
-```
+This README will stay as the main entry point. Follow the links above for the most up‑to‑date per‑model instructions.
 
 ---
 
-## 6) Repository layout
+## 4. Reproducibility
 
-```
-.
-├─ .github/                     # issue/PR templates
-├─ configs/
-│  ├─ data/movielens_1m.yaml    # paths & split strategy
-│  └─ model/{lightgcn,graphflix}.yaml
-├─ data/                        # (ignored) place CSVs under processed/ml1m/
-├─ docs/                        # architecture notes, flowchart, onboarding
-├─ scripts/                     # download/build/split/run baselines, validators
-├─ src/graphflix/               # data, models, training, evaluation, utils
-├─ tests/                       # unit tests
-├─ .env.example                 # example secrets (do not commit .env)
-├─ .gitignore
-├─ environment.yml              # Conda environment spec
-├─ pyproject.toml               # black/isort/flake8 config
-├─ requirements.txt             # pip packages
-├─ requirements-dev.txt         # dev tools
-└─ README.md
-```
+All models in this repo (LightGCN, GraphFlixHGT, and the full GraphFlix transformer) share:
 
----
+- the same MovieLens‑1M preprocessing pipeline,
+- a temporal leave‑one‑out split (train / val / test),
+- and top‑K ranking metrics (Recall@K, NDCG@K),
 
-## 7) Git workflow
-
-- **Branches:** small, focused (`feature/lightgcn`, `data/split-loo`, `docs/blog`).
-- **PRs:** at least one reviewer; use the PR template.
-- **Pre‑commit:** run `pre-commit install` once; formatting/linting on every commit.
-- **No large files in git:** `data/` and `output/` are ignored.
-
----
-
-## 8) Troubleshooting
-
-- **pandas not found** → `pip install -r requirements.txt` in the **activated** env.
-- **`.env` not picked up** → ensure `.env` exists; or set env var in shell:
-  - macOS/Linux: `export TMDB_API_KEY=...`
-  - Windows PS: `$env:TMDB_API_KEY="..."`
-  - Persistent Windows: `setx TMDB_API_KEY "..."` (restart terminal)
-- **PyTorch Geometric** → install after PyTorch; follow PyG’s wheel selector for your Torch/CUDA.
+so results are directly comparable across architectures.
