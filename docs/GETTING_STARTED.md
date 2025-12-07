@@ -2,7 +2,7 @@
 
 This guide gets you from zero → runnable baselines (**Most‑Popular** and **LightGCN**) quickly and reproducibly.
 
-> **TL;DR Fast Path**
+> **Summary and Fast Path**
 >
 > 1. Create a Python venv and install PyTorch + PyG.
 > 2. **Download the processed ML‑1M bundle** from OneDrive and unzip into `data/processed/ml1m/`.
@@ -20,7 +20,7 @@ This guide gets you from zero → runnable baselines (**Most‑Popular** and **L
 
 ---
 
-## 1) Clone the repository
+## 1. Clone the repository
 
 ```bash
 # HTTPS (easiest)
@@ -32,7 +32,7 @@ cd CS224W_GraphML_Project_ARC
 
 ---
 
-## 2) Python environment (pip + venv; GPU‑ready)
+## 2. Python environment (pip + venv; GPU‑ready)
 
 We use **pip + venv** (not conda) to avoid known CUDA/MKL issues.
 
@@ -90,7 +90,7 @@ python -m pre_commit install
 
 ---
 
-## 3) Quickstart (recommended): Use the processed bundle
+## 3. Quickstart (recommended): Use the processed bundle
 
 **Download** (Stanford OneDrive, team‑shared):
 
@@ -127,7 +127,7 @@ data/processed/ml1m/
 
 > If `graph_pyg.pt` is missing, you can build it in step 6.
 
-### 3.1) (Optional if you dont have acces to download the zip file) Build the processed bundle yourself (MovieLens + TMDb)
+### 3.1 (Optional if you dont have acces to download the zip file) Build the processed bundle yourself (MovieLens + TMDb)
 
 If you don’t want to use the preprocessed OneDrive bundle, you can recreate
 `data/processed/ml1m/` from scratch using the public MovieLens 1M dataset and
@@ -215,7 +215,7 @@ the TMDb API.
 
 ---
 
-## 4) Sanity checks
+## 4. Sanity checks
 
 Run from the repo root:
 
@@ -234,7 +234,7 @@ Expected counts (ML‑1M):
 
 ---
 
-## 5) Run baselines
+## 5. Run baselines
 
 ### A) Most‑Popular
 
@@ -296,7 +296,7 @@ python scripts/run_lightgcn.py \
 * Confirm that `data/processed/ml1m/splits/ratings_split_reindexed.csv` exists and looks sane.
 
 ---
-## 6) (Optional) Regenerate artifacts from CSVs
+## 6. (Optional) Regenerate artifacts from CSVs
 
 If you need to rebuild the evaluation split and graph locally, **follow this exact order**:
 
@@ -326,7 +326,7 @@ You can then run baselines as in §5.
 
 ---
 
-## 7) Troubleshooting
+## 7. Troubleshooting
 
 **Missing**: `data/processed/ml1m/splits/ratings_split_reindexed.csv`
 
@@ -356,7 +356,7 @@ git config --global user.email "yourid@users.noreply.github.com"
 
 ---
 
-## 8) Recommended Git workflow (short version)
+## 8. Recommended Git workflow (short version)
 
 ```bash
 # Sync main
@@ -378,7 +378,7 @@ git push -u origin HEAD
 
 ---
 
-## 9) Repo layout
+## 9. Repo layout
 
 ```
 CS224W_GraphML_Project_ARC/
