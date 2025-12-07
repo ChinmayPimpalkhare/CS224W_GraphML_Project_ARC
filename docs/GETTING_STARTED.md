@@ -112,7 +112,7 @@ md5sum -c ml1m_processed.md5     # or: md5 ml1m_processed_20251109.zip (macOS)
 
 **You should now have (typical):**
 
-```
+```text
 data/processed/ml1m/
   actors.csv                    movies.csv          ratings.csv          users.csv
   directors.csv                 movies_enriched.csv movie_actor_edges.csv
@@ -122,10 +122,96 @@ data/processed/ml1m/
   splits/ratings_split_reindexed.csv
   graph_stats.json              graph_pyg.pt        (~32 MB)
   runs/{mostpop_metrics.json, lightgcn_metrics.json}
-  lightgcn_best.pt             lightgcn_emb.pt
+  lightgcn_best.pt              lightgcn_emb.pt
 ```
 
 > If `graph_pyg.pt` is missing, you can build it in step 6.
+
+### 3.1) (Optional if you dont have acces to download the zip file) Build the processed bundle yourself (MovieLens + TMDb)
+
+If you don’t want to use the preprocessed OneDrive bundle, you can recreate
+`data/processed/ml1m/` from scratch using the public MovieLens 1M dataset and
+the TMDb API.
+
+> **Important:** You need your own TMDb API key.
+> See [How to get a TMDb API key](#how-to-get-a-tmdb-api-key) below, and **do not**
+> commit your key to the public repo.
+
+1. **Set your TMDb API key in `scripts/movielens.py`**
+
+   Open `scripts/movielens.py` and replace the placeholder value at the top:
+
+   ```python
+   # TMDb API Configuration
+   TMDB_API_KEY = "YOUR_TMDB_API_KEY_HERE"
+   ```
+
+   Replace `"YOUR_TMDB_API_KEY_HERE"` with your own key (or change the script to
+   read from an environment variable, e.g. `os.environ["TMDB_API_KEY"]`).
+   Make sure you **never commit** a real key.
+
+2. **Run the MovieLens + TMDb enrichment script**
+
+   From the repo root:
+
+   ```bash
+   python scripts/movielens.py
+   ```
+
+   This script will:
+
+   * Download the official **MovieLens 1M** zip from GroupLens (`ml-1m.zip`) and extract it.
+   * Convert the raw `*.dat` files into CSVs.
+   * Call the **TMDb API** for each movie to fetch:
+
+     * directors
+     * top‑billed actors
+     * genres
+     * TMDb / IMDb IDs
+   * Write the following files into an `output/` directory:
+
+     ```text
+     output/
+       movies.csv                 # original MovieLens movies
+       ratings.csv                # original MovieLens ratings
+       users.csv                  # original MovieLens users
+       movies_enriched.csv        # MovieLens + TMDb/IMDb IDs
+       directors.csv
+       actors.csv
+       genres.csv
+       movie_director_edges.csv
+       movie_actor_edges.csv
+       movie_genre_edges.csv
+     ```
+
+3. **Move the output into the expected location**
+
+   The rest of the repo expects everything under `data/processed/ml1m/`.
+   After `scripts/movielens.py` finishes:
+
+   ```bash
+   mkdir -p data/processed
+   mv output data/processed/ml1m
+   ```
+
+4. **Continue with the normal pipeline**
+
+   At this point you’ve recreated the processed dataset that the OneDrive bundle
+   contains. You can now follow the existing steps:
+
+   * Section **4) Sanity checks** (if you want)
+   * Section **5) Run baselines** (`run_mostpop.py`, `run_lightgcn.py`)
+   * Section **6) (Optional) Regenerate artifacts from CSVs**
+     (`split_temporal.py` → `reindex_ids.py` → `build_graph_pyg.py --use_train_only`)
+
+### How to get a TMDb API key
+
+1. Go to [themoviedb.org](https://www.themoviedb.org/) and create a free account.
+2. After verifying your email, log in and go to your **Settings** → **API** section.
+3. Request a **Developer** API key (v3); fill in the short form (you can describe this as a university course project).
+4. Once the key is approved, copy the **API key (v3 auth)** string.
+5. Paste it into `TMDB_API_KEY` in `scripts/movielens.py`, or export it as an environment variable and load it in the script (recommended).
+
 
 ---
 
