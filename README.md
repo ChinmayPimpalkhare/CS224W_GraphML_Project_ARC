@@ -11,13 +11,13 @@ If you're just trying to get the code running, start here—**all environment, d
 The same doc covers three things you’ll probably want to do first:
 
 - **Environment setup (Python, PyTorch, PyG, etc.)**  
-  See: [`GETTING_STARTED.md`](GETTING_STARTED.md)
+  See: [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md)
 
 - **Download & preprocess MovieLens‑1M, build the heterogeneous graph**  
-  See: [`GETTING_STARTED.md`](GETTING_STARTED.md)
+  See: [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md)
 
 - **Run the LightGCN baseline**  
-  See: [`GETTING_STARTED.md`](GETTING_STARTED.md)
+  See: [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md)
 
 ---
 
@@ -25,7 +25,7 @@ The same doc covers three things you’ll probably want to do first:
 
 To train and evaluate the `GraphFlixHGT` variant (HGT encoder + metadata bias added at the **scoring layer**):
 
-- **[`GRAPHFLIX_HGT_SCORING.md`](GRAPHFLIX_HGT_SCORING.md)** explains:
+- **[`docs/GRAPHFLIX_HGT_SCORING.md`](docs/GRAPHFLIX_HGT_SCORING.md)** explains:
   - prerequisites (processed MovieLens‑1M data and `graph_pyg.pt`)
   - how to precompute half‑life user profiles and movie metadata
   - the training / evaluation commands for `run_graphflixHGT.py`
@@ -39,7 +39,7 @@ Use this if you want a metadata‑aware graph baseline that stays very close to 
 
 The final GraphFlix model moves the metadata bias **inside** the Graphormer attention logits and learns a global scale parameter **β** that balances graph‑structure signals with content‑based metadata:
 
--  **[`UNDERSTANDING_BETA.md`](UNDERSTANDING_BETA.md)** currently documents:
+-  **[`docs/UNDERSTANDING_BETA.md`](docs/UNDERSTANDING_BETA.md)** currently documents:
   - how β scales the metadata bias relative to the graph encoder scores
   - how half‑life user profiles and movie metadata embeddings are constructed and used
   - interpretability tips (e.g., reading off what β is doing during training)
