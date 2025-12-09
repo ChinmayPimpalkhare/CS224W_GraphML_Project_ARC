@@ -227,7 +227,7 @@ If you want the 10‑second mental model when you read the code:
      * full‑catalog ranking with **train positives masked** per user,
      * metrics: Recall@10/20, NDCG@10/20.
 
-For a deeper dive (half‑life math, LN/tanh/β, how to move the bias into attention logits instead of scoring), see the longer final project notes **“Half_Life_Profiles_and_Metadata_Aware_Graphormer_Attention.pdf”**.
+For a deeper dive (half‑life math, LN/tanh/β, how to move the bias into attention logits instead of scoring), see the longer blog on Medium **“GraphFlix: How We Taught a Graph Transformer to Understand Movie Taste”**.
 
 ---
 
