@@ -1,7 +1,7 @@
 """
 GraphFlix: Graph Transformer for Movie Recommendations with Metadata Bias.
 
-Implements the full 8-step forward pass from Section 16:
+Implements the full 8-step forward pass
 1. Sample subgraph & get features
 2. Lookup profiles and metadata
 3. Normalize embeddings
