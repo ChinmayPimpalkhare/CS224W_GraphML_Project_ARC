@@ -17,7 +17,7 @@ def main():
     r = requests.get(url)
     z = zipfile.ZipFile(io.BytesIO(r.content))
     z.extractall(dest)
-    print(f"✓ Extracted to {dest}")
+    print(f"Extracted to {dest}")
 
 
 if __name__ == "__main__":
