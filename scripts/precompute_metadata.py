@@ -232,9 +232,7 @@ def main():
             if "metadata" in config and "actor_embed_dim" in config["metadata"]:
                 args.embed_dim = config["metadata"]["actor_embed_dim"]
 
-    print("=" * 80)
     print("STEP 1.1: Precompute Metadata Embeddings φ(j)")
-    print("=" * 80)
     print(f"Data directory: {data_dir}")
     print(f"Embedding dimension: {args.embed_dim}")
     print(f"Random seed: {args.seed}")
@@ -338,9 +336,7 @@ def main():
         output_path,
     )
 
-    print("✓ Step 1.1 complete!")
-    print("=" * 80)
-
+   
 
 if __name__ == "__main__":
     main()
