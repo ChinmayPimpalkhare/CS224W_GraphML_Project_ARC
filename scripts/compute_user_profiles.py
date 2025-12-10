@@ -259,9 +259,7 @@ def main():
                 if "half_life_days" in config["profile"]:
                     args.half_life_days = config["profile"]["half_life_days"]
 
-    print("=" * 80)
     print("STEP 1.2: Compute Half-Life User Profiles p(u)")
-    print("=" * 80)
     print(f"Data directory: {data_dir}")
     print(f"Half-life τ: {args.half_life_days} days")
     print(f"Normalize profiles: {args.normalize}")
@@ -392,8 +390,6 @@ def main():
         output_path,
     )
 
-    print("✓ Step 1.2 complete!")
-    print("=" * 80)
 
 
 if __name__ == "__main__":
