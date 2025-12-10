@@ -302,7 +302,7 @@ def main():
 
     out_path = root / f"half_life_profiles_tau{int(args.tau)}.pt"
     torch.save(out, out_path)
-    print(f"✓ Saved profiles and phi to {out_path}")
+    print(f"Saved profiles and phi to {out_path}")
 
 
 if __name__ == "__main__":
