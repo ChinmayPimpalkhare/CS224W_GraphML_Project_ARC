@@ -33,7 +33,7 @@ if [ ! -f "$PHI_FILE" ]; then
         --seed 42
     echo ""
 else
-    echo "Step 1: ✓ Metadata embeddings found: $PHI_FILE"
+    echo "Step 1: Metadata embeddings found: $PHI_FILE"
     echo ""
 fi
 
@@ -48,7 +48,7 @@ if [ ! -f "$PROFILE_FILE" ]; then
         --seed 42
     echo ""
 else
-    echo "Step 2: ✓ User profiles found: $PROFILE_FILE"
+    echo "Step 2: User profiles found: $PROFILE_FILE"
     echo ""
 fi
 
@@ -62,7 +62,7 @@ python scripts/train_graphflix.py \
 
 echo ""
 echo "================================================================================"
-echo "✓ Pipeline Complete!"
+echo "Pipeline Complete!"
 echo "================================================================================"
 echo "Results saved to: $SAVE_DIR/graphflix_*"
 echo ""
