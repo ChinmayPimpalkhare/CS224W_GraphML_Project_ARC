@@ -39,9 +39,7 @@ def main():
     overlap = len(top100 & test_set)
     all_top_in_test = overlap == len(top100)
 
-    print("\n" + "=" * 60)
     print("TEST SET POPULARITY ANALYSIS")
-    print("=" * 60)
     print(f"Total test events:   {total_test}")
     print(f"Unique test items:   {unique_test}")
     print(f"Cold-start items:    {cold_start}")
@@ -52,7 +50,6 @@ def main():
     print("\nTop-100 popular items (by TRAIN counts):")
     print(f"  All appear in test: {all_top_in_test}")
     print(f"  Overlap:            {overlap} / 100")
-    print("\n" + "=" * 60)
 
 
 if __name__ == "__main__":
