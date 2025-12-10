@@ -81,9 +81,7 @@ def main():
     rank, counts = global_rank_by_popularity(train, M)
 
     # ===== COMPREHENSIVE DIAGNOSTICS =====
-    print(f"\n{'='*70}")
     print("DATASET STATISTICS")
-    print(f"{'='*70}")
     print(f"Users:                           {U:,}")
     print(f"Movies:                          {M:,}")
     print(f"Train edges:                     {len(train):,}")
@@ -93,11 +91,8 @@ def main():
     print(f"Avg train interactions per item: {len(train) / M:.1f}")
     print(f"Train sparsity:                  {100 * (1 - len(train)/(U*M)):.4f}%")
 
-    print(f"\n{'='*70}")
     print("TOP-10 MOST POPULAR ITEMS (BY TRAIN COUNT)")
-    print(f"{'='*70}")
     print(f"{'Rank':<6} {'Item ID':<10} {'Count':<10} {'% of Train':<12}")
-    print(f"{'-'*70}")
     total_train = len(train)
     for i in range(10):
         item_id = rank[i]
