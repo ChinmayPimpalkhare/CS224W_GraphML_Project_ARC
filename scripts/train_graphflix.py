@@ -337,7 +337,6 @@ class Trainer:
         num_epochs = self.config["training"]["epochs"]
         eval_every = self.config["eval"].get("eval_every", 5)
 
-        self.log("\n" + "=" * 80)
         self.log("Starting Training")
         self.log("=" * 80)
         self.log(f"Epochs: {num_epochs}")
@@ -394,7 +393,8 @@ class Trainer:
                 if primary_metric > self.best_metric:
                     self.best_metric = primary_metric
                     self.save_checkpoint("best.pt")
-                    self.log("  ✓ New best model saved!")
+                    self.log(" New best model saved!")
+                    
 
             # Update scheduler
             if self.scheduler is not None:
@@ -545,7 +545,7 @@ def main():
     trainer.train(train_loader, val_loader)
 
     trainer.log(f"\nResults saved to: {trainer.save_dir}")
-    print(f"\n✅ Training complete! Logs saved to: {trainer.log_file}")
+    print(f"\nTraining complete! Logs saved to: {trainer.log_file}")
     print(f"To monitor training progress, run in another terminal:")
     print(f"  tail -f {trainer.log_file}")
 
