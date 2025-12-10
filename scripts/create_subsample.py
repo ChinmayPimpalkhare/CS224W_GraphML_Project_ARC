@@ -33,9 +33,7 @@ def create_subsample(data_dir, sample_ratio=0.25, seed=42):
     data_dir = Path(data_dir)
     np.random.seed(seed)
 
-    print(f"=" * 80)
     print(f"Creating {int(sample_ratio*100)}% Subsample of Dataset")
-    print(f"=" * 80)
     print()
 
     # Load original data
@@ -98,14 +96,14 @@ def create_subsample(data_dir, sample_ratio=0.25, seed=42):
         movies_df = pd.read_csv(data_dir / "movies.csv")
         sampled_movies_df = movies_df[movies_df["movie_id"].isin(sampled_movies)]
         sampled_movies_df.to_csv(output_dir / "movies.csv", index=False)
-        print(f"  ✓ movies.csv: {len(sampled_movies_df)} movies")
+        print(f" movies.csv: {len(sampled_movies_df)} movies")
 
     # Copy users (filter to sampled users)
     if (data_dir / "users.csv").exists():
         users_df = pd.read_csv(data_dir / "users.csv")
         sampled_users_df = users_df[users_df["user_id"].isin(sampled_users)]
         sampled_users_df.to_csv(output_dir / "users.csv", index=False)
-        print(f"  ✓ users.csv: {len(sampled_users_df)} users")
+        print(f"users.csv: {len(sampled_users_df)} users")
 
     # Copy metadata files (genres, actors, directors)
     for file in ["genres.csv", "actors.csv", "directors.csv"]:
@@ -113,7 +111,7 @@ def create_subsample(data_dir, sample_ratio=0.25, seed=42):
         if src.exists():
             dst = output_dir / file
             pd.read_csv(src).to_csv(dst, index=False)
-            print(f"  ✓ {file}")
+            print(f"{file}")
 
     # Copy edge files (filter to sampled movies)
     edge_files = [
@@ -131,7 +129,7 @@ def create_subsample(data_dir, sample_ratio=0.25, seed=42):
             else:
                 sampled_edges = edges_df[edges_df["movie_id"].isin(sampled_movies)]
             sampled_edges.to_csv(output_dir / file, index=False)
-            print(f"  ✓ {file}: {len(sampled_edges)} edges")
+            print(f" {file}: {len(sampled_edges)} edges")
 
     # Copy mappings directory (needed by build_graph_pyg.py)
     mappings_dir = output_dir / "mappings"
@@ -149,7 +147,7 @@ def create_subsample(data_dir, sample_ratio=0.25, seed=42):
                     user_mapping.iloc[:, 0].isin(sampled_users)
                 ]
             sampled_user_mapping.to_csv(mappings_dir / "user_index.csv", index=False)
-            print(f"  ✓ mappings/user_index.csv: {len(sampled_user_mapping)} users")
+            print(f"mappings/user_index.csv: {len(sampled_user_mapping)} users")
 
         # Filter movie mappings
         if (data_dir / "mappings/movie_index.csv").exists():
@@ -163,7 +161,7 @@ def create_subsample(data_dir, sample_ratio=0.25, seed=42):
                     movie_mapping.iloc[:, 0].isin(sampled_movies)
                 ]
             sampled_movie_mapping.to_csv(mappings_dir / "movie_index.csv", index=False)
-            print(f"  ✓ mappings/movie_index.csv: {len(sampled_movie_mapping)} movies")
+            print(f"mappings/movie_index.csv: {len(sampled_movie_mapping)} movies")
 
     # Copy ratings_reindexed.csv (needed by build_graph_pyg.py)
     if (data_dir / "ratings_reindexed.csv").exists():
@@ -188,7 +186,7 @@ def create_subsample(data_dir, sample_ratio=0.25, seed=42):
         sampled_ratings_copy[available_cols].to_csv(
             output_dir / "ratings_reindexed.csv", index=False
         )
-        print(f"  ✓ ratings_reindexed.csv")
+        print(f"ratings_reindexed.csv")
 
     # Create info file
     info = {
@@ -207,9 +205,6 @@ def create_subsample(data_dir, sample_ratio=0.25, seed=42):
         json.dump(info, f, indent=2)
 
     print()
-    print("=" * 80)
-    print("✓ Subsample Created Successfully!")
-    print("=" * 80)
     print()
     print("Statistics:")
     print(f"  Sample ratio: {sample_ratio*100:.0f}%")
