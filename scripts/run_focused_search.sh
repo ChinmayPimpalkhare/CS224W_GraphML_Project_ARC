@@ -17,7 +17,7 @@ run() {
     local tn10=$(grep "TEST:" "$log" | grep -oP "ndcg@10': \K[0-9.]+")
     local vn10=$(grep "Best val" "$log" | awk '{print $4}')
     echo "$name,$tr10,$tn10,$vn10" >> "$SUMMARY"
-    echo "✓ $name: R@10=$tr10, NDCG@10=$tn10"
+    echo "$name: R@10=$tr10, NDCG@10=$tn10"
 }
 
 # Your current best from grid (baseline to beat)
