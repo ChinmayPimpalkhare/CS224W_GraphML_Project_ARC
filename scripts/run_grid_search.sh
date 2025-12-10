@@ -80,13 +80,14 @@ run_config() {
             mv "$ROOT/lightgcn_best.pt" "$RESULTS_DIR/checkpoints/${config_name}_best.pt"
         fi
         
-        echo "✓ Config completed in ${duration}s"
+        echo "Config completed in ${duration}s"
         echo "  Test Recall@10: $test_recall"
         echo "  Test NDCG@10: $test_ndcg"
         
         COMPLETED_CONFIGS=$((COMPLETED_CONFIGS + 1))
     else
-        echo "✗ Config FAILED - see $log_file"
+        echo "Config FAILED - see $log_file"
+        
     fi
     
     echo "Progress: $COMPLETED_CONFIGS / $TOTAL_CONFIGS configs completed"
