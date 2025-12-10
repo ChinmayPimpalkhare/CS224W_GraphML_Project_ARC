@@ -123,3 +123,16 @@ If you’re new to the repo, the recommended path is:
 1. Read **`docs/GETTING_STARTED.md`** and run the LightGCN baseline.  
 2. Use **`docs/TRAINING_GUIDE.md`** to train GraphFlix on a subsampled dataset.  
 3. Explore **`docs/GRAPHFLIX_HGT_SCORING.md`** and **`docs/UNDERSTANDING_BETA.md`** to dive deeper into the metadata-aware models.
+
+---
+
+### Use of AI Tools
+
+We used AI-assisted tools (such as ChatGPT/Claude) in a limited way to:
+- polish and clarify written instructions and documentation,
+- suggest refactorings and minor optimizations to improve code readability and runtime,
+- improve error messages and logging, and
+- assist with debugging and error analysis.
+
+All modeling choices, algorithms, experiments, and reported results are our own work. Any AI-generated suggestions were manually reviewed, edited, and tested by the authors before inclusion.
+
