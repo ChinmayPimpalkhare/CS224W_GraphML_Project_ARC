@@ -135,14 +135,12 @@ def main():
         import os
 
         os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
-        print("✓ Enabled MPS fallback for unsupported operations")
+        print("Enabled MPS fallback for unsupported operations")
 
-    print("=" * 70)
     print("LightGCN Training Configuration")
-    print("=" * 70)
     print(f"Device: {args.device}")
     if args.device == "mps":
-        print(f"  → Using Apple Silicon GPU (Metal Performance Shaders)")
+        print(f"Using Apple Silicon GPU (Metal Performance Shaders)")
     print(f"Seed: {args.seed}")
     print(f"Embedding dim: {args.dim}")
     print(f"Num layers: {args.layers}")
@@ -156,8 +154,7 @@ def main():
     print(f"LR Scheduler: {args.scheduler}")
     print(f"Early stopping patience: {args.early_stop_patience}")
     print(f"Use cosine similarity: {args.use_cosine}")
-    print("=" * 70)
-
+  
     P = Path(args.root)
     print(f"\nLoading data from: {P}")
     data = torch.load(P / "graph_pyg.pt", weights_only=False)
@@ -317,7 +314,7 @@ def main():
                 best_val_ndcg = val_ndcg
                 best_epoch = ep
                 patience_counter = 0
-                print(" ← NEW BEST", end="")
+                print("NEW BEST", end="")
                 # Save best checkpoint
                 torch.save(
                     {"emb": emb_all, "epoch": ep, "val_ndcg": val_ndcg},
@@ -343,12 +340,10 @@ def main():
         else:
             print()
 
-    print("\n" + "=" * 70)
     print(
         f"Training Complete! Best Val NDCG@10: {best_val_ndcg:.4f} at epoch {best_epoch}"
     )
-    print("=" * 70)
-
+   
     # Final eval on test - use best checkpoint
     model.eval()
     best_path = P / "lightgcn_best.pt"
@@ -372,9 +367,7 @@ def main():
         emb_all, U, M, spl, pos, "test", K=(10, 20), use_cosine=args.use_cosine
     )
 
-    print("\n" + "=" * 70)
     print("FINAL RESULTS")
-    print("=" * 70)
     print("VALIDATION METRICS:")
     for k, v in val_metrics.items():
         print(f"  {k:15s}: {v:.4f}")
@@ -400,9 +393,9 @@ def main():
             indent=2,
         )
 
-    print(f"✓ Saved metrics:     {P / 'runs' / 'lightgcn_metrics.json'}")
-    print(f"✓ Saved embeddings:  {P / 'lightgcn_emb.pt'}")
-    print(f"✓ Saved checkpoint:  {P / 'lightgcn_best.pt'}")
+    print(f"Saved metrics:     {P / 'runs' / 'lightgcn_metrics.json'}")
+    print(f"Saved embeddings:  {P / 'lightgcn_emb.pt'}")
+    print(f"Saved checkpoint:  {P / 'lightgcn_best.pt'}")
     print("\nDone!")
 
 
