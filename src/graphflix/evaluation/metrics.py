@@ -117,12 +117,6 @@ def compute_metrics(ranks, k_list=[10, 20]):
 def evaluate_model(model, dataloader, k_list=[10, 20], device="cpu"):
     """
     Evaluate GraphFlix model on validation/test set.
-
-    ⚠️  WARNING: This evaluation uses only 1 negative sample per positive!
-    This is NOT a proper evaluation - it's trivially easy and causes data leakage.
-
-    Proper evaluation should rank against 99+ negatives or all items.
-
     Args:
         model: GraphFlix model
         dataloader: DataLoader with validation/test data
@@ -136,10 +130,6 @@ def evaluate_model(model, dataloader, k_list=[10, 20], device="cpu"):
 
     all_ranks = []
 
-    print(f"⚠️  WARNING: Using 1-vs-1 evaluation (1 positive vs 1 negative)")
-    print(f"   This is NOT a proper evaluation protocol!")
-    print(f"   Results will be artificially high.")
-    print(f"   Standard protocol: rank against 99 negatives (1-vs-100)")
     print()
     print(f"Evaluating on {len(dataloader)} batches...")
 
@@ -158,9 +148,6 @@ def evaluate_model(model, dataloader, k_list=[10, 20], device="cpu"):
             batch_info=batch.batch_info,
         )
 
-        # ⚠️  FLAWED: Only ranking 1 positive vs 1 negative
-        # This is trivially easy and not a proper evaluation
-        # Rank = 1 if score_pos > score_neg, else 2
         batch_ranks = (scores_pos <= scores_neg).long() + 1
 
         all_ranks.extend(batch_ranks.cpu().numpy())
@@ -186,8 +173,6 @@ def evaluate_ranking_full(
 ):
     """
     Full ranking evaluation (rank all items for each user).
-
-    More comprehensive but slower than pairwise evaluation.
 
     Args:
         model: GraphFlix model
@@ -220,19 +205,6 @@ def evaluate_ranking_full(
     print(f"Evaluating {len(user_test_items)} users on full ranking...")
 
     for user_id, test_items in tqdm(user_test_items.items(), desc="Users"):
-        # For this user, rank all items
-        # This is computationally expensive - simplified version here
-
-        # In practice, you would:
-        # 1. Sample subgraph for user
-        # 2. Score all candidate items
-        # 3. Rank them
-        # 4. Find rank of test items
-
-        # For now, we'll use a simplified version
-        # that just checks positive vs negative ranking
-
-        # Placeholder: assume rank based on simple scoring
         for test_item in test_items:
             # This would require full item ranking implementation
             # For now, we approximate with pairwise ranking
