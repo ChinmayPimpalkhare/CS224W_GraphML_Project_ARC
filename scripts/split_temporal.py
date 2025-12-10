@@ -31,7 +31,8 @@ def main():
         parts.extend([train, val, test])
     split = pd.concat(parts, ignore_index=True)
     split.to_csv(out / "ratings_split.csv", index=False)
-    print(f"✓ Wrote {out/'ratings_split.csv'}")
+    print(f"Wrote {out/'ratings_split.csv'}")
+    
 
 
 if __name__ == "__main__":
